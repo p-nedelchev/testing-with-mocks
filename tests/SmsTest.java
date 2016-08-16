@@ -14,13 +14,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class SmsTest {
     @Rule
     public JUnitRuleMockery context = new JUnitRuleMockery();
+    private Validator validator = context.mock(Validator.class, "first validator");
+    private SmsSender sender = context.mock(SmsSender.class, "first sender");
+    private Gateway gateway = new Gateway(validator, sender);
+
 
     @Test
     public void happyPath () {
-        ShortMessage validMessage = new ShortMessage("+359893568932", "Hello", "This is valis message.");
-        Validator validator = context.mock(Validator.class, "first validator");
-        SmsSender sender = context.mock(SmsSender.class, "first sender");
-        Gateway gateway = new Gateway(validator, sender);
+        ShortMessage validMessage = new ShortMessage("+359893568932", "Hello", "This is valid message.");
         context.checking(new Expectations() {{
             oneOf(validator).isValid(validMessage);
             will(returnValue(true));
@@ -31,13 +32,22 @@ public class SmsTest {
         assertThat(gateway.send(validMessage), is(true));
     }
 
+    @Test
+    public void failingToSend () {
+        ShortMessage validMessage = new ShortMessage("+359893568932", "Hello", "This is valid message.");
+        context.checking(new Expectations() {{
+            oneOf(validator).isValid(validMessage);
+            will(returnValue(true));
+
+            oneOf(sender).send(validMessage);
+            will(returnValue(false));
+        }});
+        assertThat(gateway.send(validMessage), is(false));
+    }
 
     @Test(expected = MessageFailToSend.class)
-    public void sendingFail () {
+    public void validationFail () {
         ShortMessage invalidMessage = new ShortMessage("+359893658932", "Hello", "");
-        Validator validator = context.mock(Validator.class, "second validator");
-        SmsSender sender = context.mock(SmsSender.class, "second sender");
-        Gateway gateway = new Gateway(validator, sender);
         context.checking(new Expectations() {{
             oneOf(validator).isValid(invalidMessage);
             will(returnValue(false));
