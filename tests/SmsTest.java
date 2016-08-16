@@ -14,8 +14,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class SmsTest {
     @Rule
     public JUnitRuleMockery context = new JUnitRuleMockery();
-    private Validator validator = context.mock(Validator.class, "first validator");
-    private SmsSender sender = context.mock(SmsSender.class, "first sender");
+    private Validator validator = context.mock(Validator.class);
+    private SmsSender sender = context.mock(SmsSender.class);
     private Gateway gateway = new Gateway(validator, sender);
 
 
